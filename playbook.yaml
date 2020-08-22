@@ -1,0 +1,4 @@
+---
+- import_playbook: sub-playbooks/playbook-firewalld.yaml
+- import_playbook: sub-playbooks/playbook-mariadb-server.yaml
+- import_playbook: sub-playbooks/playbook-web.yaml

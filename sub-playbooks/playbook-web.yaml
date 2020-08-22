@@ -1,0 +1,46 @@
+---
+- name: web
+  hosts: web
+  become: yes
+  become_user: root
+  tasks:
+  - include_vars: vars.yaml
+  - name: install web server (httpd, php, php-mysqlnd)
+    dnf:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - httpd
+      - php
+      - php-mysqlnd
+  - name: configure firewall
+    shell: |
+      firewall-cmd --permanent --zone=public --add-port={{web_port}}/tcp
+      firewall-cmd --reload
+  - name: configure httpd
+    replace:
+      path: "/etc/httpd/conf/httpd.conf"
+      regexp: "index.html"
+      replace: "index.php"
+  - name: start and enable httpd
+    systemd:
+      name: httpd
+      state: started
+      enabled: true
+  - name: install git
+    yum:
+      name: git
+      state: latest
+  - name: clone repository
+    git:
+      repo: "https://github.com/kodekloudhub/learning-app-ecommerce.git"
+      dest: "/var/www/html"
+      force: yes
+  - name: configure php file
+    replace:
+      path: /var/www/html/index.php
+      regexp: "172.20.1.101"
+      replace: "{{mariadb_host}}"
+  - name: enable httpd connection to db
+    shell:
+      cmd: setsebool -P httpd_can_network_connect_db 1

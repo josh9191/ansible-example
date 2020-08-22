@@ -1,0 +1,15 @@
+---
+- name: ecommerce
+  hosts: ecommerce
+  become: yes
+  become_user: root
+  tasks:
+  - name: install firewalld
+    yum:
+      name: firewalld
+      state: latest
+  - name: start and enable firewalld
+    systemd:
+      name: firewalld
+      state: started
+      enabled: yes

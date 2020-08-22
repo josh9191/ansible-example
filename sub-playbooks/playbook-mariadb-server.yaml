@@ -1,0 +1,48 @@
+---
+- name: mariadb-server
+  hosts: db
+  become: yes
+  become_user: root
+  tasks:
+  - include_vars: vars.yaml 
+  - name: install python3 
+    dnf:
+      name: python3
+      state: latest
+  - name: install pymysql
+    pip:
+      name: pymysql
+      state: present
+  - name: install mariadb-server
+    yum:
+      name: mariadb-server
+      state: latest
+  - name: start and enable mariadb-server
+    systemd:
+      name: mariadb
+      state: started
+      enabled: yes
+  - name: configure firewall
+    shell: |
+      firewall-cmd --permanent --zone=public --add-port={{mariadb_port}}/tcp
+      firewall-cmd --reload
+  - name: create database
+    mysql_db:
+      name: ecomdb
+      state: present
+  - name: create mariadb user
+    mysql_user:
+      name: ecomuser
+      password: ecompassword
+      host: "{{web_host}}"
+      priv: '*.*:ALL'
+      state: present
+  - name: copy script
+    copy:
+      src: sql-scripts/db-load-script.sql
+      dest: /tmp
+  - name: load script
+    mysql_db:
+      name: ecomdb 
+      state: import
+      target: /tmp/db-load-script.sql
